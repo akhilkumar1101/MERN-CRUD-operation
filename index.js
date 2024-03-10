@@ -1,0 +1,59 @@
+let express=require("express")
+let mongoose=require("mongoose")
+let cors=require("cors")
+let bodyParser=require("body-parser")
+let registerData = require("./models/registerSchema")
+
+mongoose.connect("mongodb://127.0.0.1:27017/mernUsers")
+
+mongoose.connection
+.once("open",()=>{console.log("Database connected");})
+.on("error",()=>{console.log("Error");})
+
+let app=express()
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({extended:true}))
+app.use(cors())
+
+// app.post("/register",(req,res)=>{
+//     let details= new registerData(req.body)
+
+//     details.save()
+//     .then((data)=>{res.json(data)})
+//     .catch((error)=>{res.json(error)})
+//     console.log(req.body);
+// })
+app.post("/register",(req,res)=>{
+    console.log(req.body);
+    registerData.findOne({email:req.body.email})
+    .then((user)=>{
+        if (user!==null) {
+            res.json("Email is already registered")
+        }
+        else{
+            let details=new registerData(req.body)
+            details.save()
+            .then((user)=>{res.json(user)})
+            .catch(()=>{res.json("Data didn't save")})
+        }
+    })
+    .catch((err)=>{console.log(err);})
+})
+
+app.post("/login",(req,res)=>{
+    registerData.findOne({name:req.body.name})
+    .then((user)=>{
+        if(user.confp==req.body.pass){
+            res.json("success")
+        }
+        else
+        {
+            res.json("failure")
+        }
+    })
+    .catch(()=>{console.log("error");})
+})
+
+app.listen(8000,()=>{
+    console.log("server listening at 8000");
+})
